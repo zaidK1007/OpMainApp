@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Site {
+  id        String    @id @default(uuid())
+  name      String
+  location  String
+  machines  Machine[]
+}
+
+model Machine {
+  id                  String    @id @default(uuid())
+  name                String
+  status              String
+  nextMaintenanceDate DateTime
+  lastMaintenanceDate DateTime
+  totalHoursRun       Int
+  desiredDailyHours   Int
+  siteId              String
+  site                Site      @relation(fields: [siteId], references: [id])
+  operationLogs       OperationLog[]
+  maintenanceTasks    MaintenanceTask[]
+  machineType         String    @default("general") // e.g., "DSS", "Pump", "Compressor"
+}
+
+model OperationLog {
+  id                          String   @id @default(uuid())
+  date                        DateTime
+  startTime                   String
+  endTime                     String
+  totalHours                  Int
+  engineer                    String
+  operator                    String
+  notOperatedReason           String?
+  maintenanceChecklistCompleted Boolean
+  machineId                   String
+  machine                     Machine  @relation(fields: [machineId], references: [id])
+}
+
+model MaintenanceTaskTemplate {
+  id            String   @id @default(uuid())
+  task          String
+  priority      String
+  frequency     String   @default("daily") // daily, weekly, yearly
+  machineType   String   // e.g., "DSS", "Pump", "Compressor"
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  maintenanceTasks MaintenanceTask[]
+}
+
+model MaintenanceTask {
+  id                    String   @id @default(uuid())
+  task                  String
+  completed             Boolean
+  completedBy           String?
+  completedDate         DateTime?
+  priority              String
+  frequency             String   @default("daily") // daily, weekly, yearly
+  machineId             String
+  machine               Machine  @relation(fields: [machineId], references: [id])
+  taskTemplateId        String?
+  taskTemplate          MaintenanceTaskTemplate? @relation(fields: [taskTemplateId], references: [id])
+}
+
+model User {
+  id           String         @id @default(uuid())
+  name         String
+  email        String         @unique
+  password     String
+  role         Role
+  isActive     Boolean        @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  sessions     UserSession[]
+  loginHistory LoginHistory[]
+  auditLogs    AuditLog[]
+}
+
+model UserSession {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  isActive  Boolean  @default(true)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LoginHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String?
+  userAgent String?
+  success   Boolean
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id])
+  action      String      // e.g., "LOGIN", "LOGOUT", "CREATE_USER", "UPDATE_MACHINE"
+  resource    String?     // e.g., "User", "Machine", "MaintenanceTask"
+  resourceId  String?     // ID of the affected resource
+  details     String?     // JSON string with additional details
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime    @default(now())
+}
+
+enum Role {
+  admin
+  engineer
+}
