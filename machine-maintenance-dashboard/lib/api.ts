@@ -283,6 +283,7 @@ class ApiService {
     operator: string;
     notOperatedReason?: string;
     maintenanceChecklistCompleted?: boolean;
+    weeklyChecklistCompleted?: boolean;
   }): Promise<any> {
     return this.request<any>('/api/operation-logs', {
       method: 'POST',

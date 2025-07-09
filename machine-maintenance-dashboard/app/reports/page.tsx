@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectLabel, SelectGroup } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -16,6 +16,7 @@ import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useAuth } from "@/lib/auth-context"
 import { apiService } from "@/lib/api"
+import React from "react"
 
 function ReportsContent() {
   const { token } = useAuth()
@@ -67,10 +68,32 @@ function ReportsContent() {
     console.log("Exporting report...")
   }
 
-  // Helper: get filtered machines for dropdown
-  const filteredMachines = selectedSite && selectedSite !== "all"
-    ? machines.filter(m => m.siteId === selectedSite)
-    : machines
+  // Helper: get filtered machines for dropdown, grouped and sorted by site
+  const groupedMachines = (() => {
+    // Map siteId to site object for easy lookup
+    const siteMap = Object.fromEntries(sites.map(site => [site.id, site]))
+    // Filter and sort machines
+    const machinesToShow = selectedSite && selectedSite !== "all"
+      ? machines.filter(m => m.siteId === selectedSite)
+      : machines
+    // Group machines by siteId
+    const groups: Record<string, any[]> = {}
+    machinesToShow.forEach(machine => {
+      if (!groups[machine.siteId]) groups[machine.siteId] = []
+      groups[machine.siteId].push(machine)
+    })
+    // Sort sites alphabetically
+    const sortedSiteIds = Object.keys(groups).sort((a, b) => {
+      const siteA = siteMap[a]?.name || ''
+      const siteB = siteMap[b]?.name || ''
+      return siteA.localeCompare(siteB)
+    })
+    // Sort machines within each site
+    sortedSiteIds.forEach(siteId => {
+      groups[siteId].sort((a, b) => a.name.localeCompare(b.name))
+    })
+    return { groups, sortedSiteIds, siteMap }
+  })()
 
   // Helper: operation summary (actual vs desired hours)
   const operationSummary = machines.map(machine => {
@@ -178,10 +201,15 @@ function ReportsContent() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Machines</SelectItem>
-                  {filteredMachines.map((machine) => (
-                    <SelectItem key={machine.id} value={machine.id}>
-                      {machine.name}
-                    </SelectItem>
+                  {groupedMachines.sortedSiteIds.map(siteId => (
+                    <SelectGroup key={siteId}>
+                      <SelectLabel>{groupedMachines.siteMap[siteId]?.name || "Unknown Site"}</SelectLabel>
+                      {groupedMachines.groups[siteId].map((machine) => (
+                        <SelectItem key={machine.id} value={machine.id}>
+                          {machine.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>

@@ -109,6 +109,54 @@ function MaintenanceContent() {
   const weeklyStats = getCompletionStats(weeklyTasks)
   const yearlyStats = getCompletionStats(yearlyTasks)
 
+  // Helper function to get week dates for the current month
+  const getWeekDates = () => {
+    const now = new Date()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+    
+    // Get the first day of the current month
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1)
+    
+    // Find the first Monday of the month (or the Monday of the week containing the first day)
+    const firstMonday = new Date(firstDayOfMonth)
+    const dayOfWeek = firstMonday.getDay()
+    const daysToAdd = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) // If Sunday, go to next Monday
+    firstMonday.setDate(firstDayOfMonth.getDate() + daysToAdd)
+    
+    // If the first Monday is in the next month, go back to the previous Monday
+    if (firstMonday.getMonth() !== currentMonth) {
+      firstMonday.setDate(firstMonday.getDate() - 7)
+    }
+    
+    const weeks = []
+    let currentWeekStart = new Date(firstMonday)
+    
+    // Generate 4-5 weeks for the month
+    for (let week = 1; week <= 5; week++) {
+      const weekEnd = new Date(currentWeekStart)
+      weekEnd.setDate(currentWeekStart.getDate() + 6) // Sunday
+      
+      // Stop if we've moved to the next month
+      if (currentWeekStart.getMonth() !== currentMonth) {
+        break
+      }
+      
+      weeks.push({
+        weekNumber: week,
+        startDate: new Date(currentWeekStart),
+        endDate: new Date(weekEnd),
+        label: `Week ${week} (${currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
+      })
+      
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7)
+    }
+    
+    return weeks
+  }
+
+  const weekDates = getWeekDates()
+
   const handleTaskToggle = async (taskId: string, completed: boolean) => {
     if (!completedBy) {
       toast({
@@ -217,48 +265,103 @@ function MaintenanceContent() {
               </p>
             </div>
           )}
-          {tasks.map((task) => (
-            <div key={task.id} className="flex items-center space-x-2 p-2 border rounded">
-              <Checkbox
-                checked={task.completed}
-                onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
-                disabled={isUpdating}
-              />
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <span className={task.completed ? "line-through text-muted-foreground" : ""}>
-                    {task.task}
-                  </span>
-                  {task.taskTemplateId && (
-                    <Badge variant="outline" className="text-xs">
-                      Template
-                    </Badge>
-                  )}
+          {activeTab === "weekly" ? (
+            // Render weekly tasks grouped by weeks
+            weekDates.map((week) => (
+              <div key={week.weekNumber} className="space-y-2">
+                <div className="flex items-center space-x-2 p-2 bg-muted rounded-lg">
+                  <Calendar className="h-4 w-4" />
+                  <span className="font-medium text-sm">{week.label}</span>
                 </div>
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <Badge
-                    variant={
-                      task.priority === "high"
-                        ? "destructive"
-                        : task.priority === "medium"
-                          ? "default"
-                          : "secondary"
-                    }
-                  >
-                    {task.priority}
-                  </Badge>
-                  <span>•</span>
-                  <span>{task.frequency}</span>
-                  {task.completedBy && (
-                    <>
-                      <span>•</span>
-                      <span>Completed by {task.completedBy}</span>
-                    </>
-                  )}
+                {tasks.map((task) => (
+                  <div key={task.id} className="flex items-center space-x-2 p-2 border rounded ml-4">
+                    <Checkbox
+                      checked={task.completed}
+                      onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
+                      disabled={isUpdating}
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <span className={task.completed ? "line-through text-muted-foreground" : ""}>
+                          {task.task}
+                        </span>
+                        {task.taskTemplateId && (
+                          <Badge variant="outline" className="text-xs">
+                            Template
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <Badge
+                          variant={
+                            task.priority === "high"
+                              ? "destructive"
+                              : task.priority === "medium"
+                                ? "default"
+                                : "secondary"
+                          }
+                        >
+                          {task.priority}
+                        </Badge>
+                        <span>•</span>
+                        <span>{task.frequency}</span>
+                        {task.completedBy && (
+                          <>
+                            <span>•</span>
+                            <span>Completed by {task.completedBy}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))
+          ) : (
+            // Render daily and yearly tasks normally
+            tasks.map((task) => (
+              <div key={task.id} className="flex items-center space-x-2 p-2 border rounded">
+                <Checkbox
+                  checked={task.completed}
+                  onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
+                  disabled={isUpdating}
+                />
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <span className={task.completed ? "line-through text-muted-foreground" : ""}>
+                      {task.task}
+                    </span>
+                    {task.taskTemplateId && (
+                      <Badge variant="outline" className="text-xs">
+                        Template
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <Badge
+                      variant={
+                        task.priority === "high"
+                          ? "destructive"
+                          : task.priority === "medium"
+                            ? "default"
+                            : "secondary"
+                      }
+                    >
+                      {task.priority}
+                    </Badge>
+                    <span>•</span>
+                    <span>{task.frequency}</span>
+                    {task.completedBy && (
+                      <>
+                        <span>•</span>
+                        <span>Completed by {task.completedBy}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </>
       )}
     </div>

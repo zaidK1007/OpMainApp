@@ -38,6 +38,7 @@ function SitesContent() {
   const [isEditMachineOpen, setIsEditMachineOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [activeTab, setActiveTab] = useState("sites")
 
   // Form states
   const [siteForm, setSiteForm] = useState({ name: '', location: '' })
@@ -230,6 +231,7 @@ function SitesContent() {
       })
       setMachineForm({ name: '', siteId: '', desiredDailyHours: '', machineType: '' })
       setIsAddMachineOpen(false)
+      setActiveTab("machines") // Stay on machines tab after adding
       loadData()
     } catch (error: any) {
       console.error('Error creating machine:', error)
@@ -492,7 +494,7 @@ function SitesContent() {
         </div>
       </div>
 
-      <Tabs defaultValue="sites" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="sites">Sites</TabsTrigger>
           <TabsTrigger value="machines">Machines</TabsTrigger>
@@ -733,58 +735,71 @@ function SitesContent() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {machines.map((machine) => (
-                    <TableRow key={machine.id}>
-                      <TableCell className="font-medium">{machine.name}</TableCell>
-                      <TableCell>{machine.site.name}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            machine.status === "operational"
-                              ? "default"
-                              : machine.status === "under-maintenance"
-                                ? "destructive"
-                                : "secondary"
-                          }
-                        >
-                          {machine.status.replace("-", " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(machine.nextMaintenanceDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>{machine.totalHoursRun}h</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-1">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleApplyTaskTemplates(machine.id, machine.name)}
-                            title="Apply maintenance task templates"
-                          >
-                            <ClipboardList className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              setEditingMachine(machine)
-                              setIsEditMachineOpen(true)
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleDeleteMachine(machine.id, machine.name)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {/* Group and sort machines by site */}
+                  {(() => {
+                    // Map siteId to site object
+                    const siteMap = Object.fromEntries(sites.map(site => [site.id, site]))
+                    // Group machines by siteId
+                    const groups = machines.reduce((acc, machine) => {
+                      if (!acc[machine.siteId]) acc[machine.siteId] = []
+                      acc[machine.siteId].push(machine)
+                      return acc
+                    }, {} as Record<string, any[]>)
+                    // Sort siteIds by site name
+                    const sortedSiteIds = Object.keys(groups).sort((a: string, b: string) => {
+                      const siteA = siteMap[a]?.name || ''
+                      const siteB = siteMap[b]?.name || ''
+                      return siteA.localeCompare(siteB)
+                    })
+                    // Render
+                    return sortedSiteIds.map((siteId: string) => [
+                      <TableRow key={siteId + "-header"}>
+                        <TableCell colSpan={6} className="font-bold bg-muted text-lg">
+                          {siteMap[siteId]?.name || "Unknown Site"}
+                        </TableCell>
+                      </TableRow>,
+                      ...groups[siteId].sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)).map((machine: any) => (
+                        <TableRow key={machine.id}>
+                          <TableCell className="font-medium">{machine.name}</TableCell>
+                          <TableCell>{siteMap[siteId]?.name || "Unknown Site"}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                machine.status === "operational"
+                                  ? "default"
+                                  : machine.status === "maintenance"
+                                  ? "secondary"
+                                  : "destructive"
+                              }
+                            >
+                              {machine.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{machine.nextMaintenanceDate ? new Date(machine.nextMaintenanceDate).toLocaleDateString() : "-"}</TableCell>
+                          <TableCell>{machine.totalHours ?? "-"}</TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                setEditingMachine(machine)
+                                setIsEditMachineOpen(true)
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteMachine(machine.id, machine.name)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ])
+                  })()}
                 </TableBody>
               </Table>
             </CardContent>

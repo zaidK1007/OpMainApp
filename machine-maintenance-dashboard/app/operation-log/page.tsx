@@ -29,6 +29,7 @@ function OperationLogContent() {
   const [operator, setOperator] = useState("")
   const [notOperatedReason, setNotOperatedReason] = useState("")
   const [maintenanceCompleted, setMaintenanceCompleted] = useState(false)
+  const [weeklyChecklistCompleted, setWeeklyChecklistCompleted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -115,7 +116,8 @@ function OperationLogContent() {
         engineer,
         operator,
         notOperatedReason: notOperatedReason || undefined,
-        maintenanceChecklistCompleted: maintenanceCompleted
+        maintenanceChecklistCompleted: maintenanceCompleted,
+        weeklyChecklistCompleted: weeklyChecklistCompleted
       })
 
       // Refresh operation logs
@@ -129,6 +131,7 @@ function OperationLogContent() {
       setOperator("")
       setNotOperatedReason("")
       setMaintenanceCompleted(false)
+      setWeeklyChecklistCompleted(false)
 
       toast({
         title: "Success",
@@ -262,6 +265,15 @@ function OperationLogContent() {
                 <Label htmlFor="maintenance-completed">Maintenance checklist completed</Label>
               </div>
 
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="weekly-checklist-completed"
+                  checked={weeklyChecklistCompleted}
+                  onCheckedChange={(checked) => setWeeklyChecklistCompleted(checked as boolean)}
+                />
+                <Label htmlFor="weekly-checklist-completed">Weekly checklist completed</Label>
+              </div>
+
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
@@ -288,13 +300,14 @@ function OperationLogContent() {
                   <TableHead>Machine</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Hours</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Maintenance</TableHead>
+                  <TableHead>Weekly</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredLogs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
                       No operation logs found
                     </TableCell>
                   </TableRow>
@@ -309,6 +322,11 @@ function OperationLogContent() {
                       <TableCell>
                         <Badge variant={log.maintenanceChecklistCompleted ? "default" : "secondary"}>
                           {log.maintenanceChecklistCompleted ? "Complete" : "Pending"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={log.weeklyChecklistCompleted ? "default" : "secondary"}>
+                          {log.weeklyChecklistCompleted ? "Complete" : "Pending"}
                         </Badge>
                       </TableCell>
                     </TableRow>
