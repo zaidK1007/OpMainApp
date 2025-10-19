@@ -1,6 +1,6 @@
 import { AuthResponse, LoginCredentials, RegisterData } from './types';
 
-const API_BASE_URL = 'http://localhost:3002';
+const API_BASE_URL = 'https://op-main-app.vercel.app:3002';
 
 class ApiService {
   private baseURL: string;
