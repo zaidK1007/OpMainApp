@@ -20,10 +20,6 @@
       "dest": "machine-maintenance-dashboard/$1"
     }
   ],
-  "env": {
-    "JWT_SECRET": "@JWT_SECRET",
-    "DATABASE_URL": "@DATABASE_URL"
-  },
   "installCommand": "cd machine-maintenance-backend && npm install && cd ../machine-maintenance-dashboard && npm install",
   "buildCommand": "cd machine-maintenance-backend && npx prisma generate && cd ../machine-maintenance-dashboard && npm run build"
 }
