@@ -10,8 +10,7 @@
     "build:frontend": "cd machine-maintenance-dashboard && npm run build",
     "dev": "concurrently \"cd machine-maintenance-backend && npm run dev\" \"cd machine-maintenance-dashboard && npm run dev\"",
     "setup-db": "node scripts/setup-database.js",
-    "deploy": "vercel --prod",
-    "postinstall": "cd machine-maintenance-backend && npx prisma generate"
+    "deploy": "vercel --prod"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
