@@ -24,11 +24,6 @@
     "JWT_SECRET": "@jwt_secret",
     "DATABASE_URL": "@database_url"
   },
-  "functions": {
-    "machine-maintenance-backend/index.js": {
-      "maxDuration": 30
-    }
-  },
   "installCommand": "cd machine-maintenance-backend && npm install && cd ../machine-maintenance-dashboard && npm install",
   "buildCommand": "cd machine-maintenance-backend && npx prisma generate && cd ../machine-maintenance-dashboard && npm run build"
 }
