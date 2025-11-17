@@ -10,7 +10,8 @@
     "seed": "node prisma/seed.js",
     "setup-db": "node ../scripts/setup-database.js",
     "migrate": "prisma migrate deploy",
-    "generate": "prisma generate"
+    "generate": "prisma generate",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
