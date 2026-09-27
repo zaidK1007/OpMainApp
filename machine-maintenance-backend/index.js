@@ -911,8 +911,8 @@ app.post('/api/operation-logs', async (req, res) => {
       maintenanceChecklistCompleted
     } = req.body;
 
-    if (!machineId || !date || !startTime || !endTime || !engineer || !operator) {
-      return res.status(400).json({ error: 'Machine ID, date, times, engineer, and operator are required' });
+    if (!machineId || !date || totalHours === undefined || totalHours === null || totalHours === '' || !engineer) {
+      return res.status(400).json({ error: 'Machine ID, date, total time, and engineer are required' });
     }
 
     // Validate machine exists
@@ -933,11 +933,11 @@ app.post('/api/operation-logs', async (req, res) => {
       data: {
         machineId,
         date: new Date(date),
-        startTime,
-        endTime,
+        startTime: startTime || 'N/A',
+        endTime: endTime || 'N/A',
         totalHours: parseInt(totalHours) || 0,
         engineer,
-        operator,
+        operator: operator || 'N/A',
         notOperatedReason: notOperatedReason || null,
         maintenanceChecklistCompleted: maintenanceChecklistCompleted || false
       },

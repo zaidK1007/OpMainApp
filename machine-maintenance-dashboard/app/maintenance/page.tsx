@@ -96,7 +96,10 @@ function MaintenanceContent() {
 
   const dailyTasks = getTasksByFrequency("daily")
   const weeklyTasks = getTasksByFrequency("weekly")
-  const yearlyTasks = getTasksByFrequency("yearly")
+  const monthlyTasks = [
+    ...getTasksByFrequency("monthly"),
+    ...getTasksByFrequency("yearly"),
+  ]
 
   const getCompletionStats = (tasks: any[]) => {
     const completedTasks = tasks.filter((task) => task.completed).length
@@ -107,7 +110,7 @@ function MaintenanceContent() {
 
   const dailyStats = getCompletionStats(dailyTasks)
   const weeklyStats = getCompletionStats(weeklyTasks)
-  const yearlyStats = getCompletionStats(yearlyTasks)
+  const monthlyStats = getCompletionStats(monthlyTasks)
 
   // Helper function to get week dates for the current month
   const getWeekDates = () => {
@@ -318,7 +321,7 @@ function MaintenanceContent() {
               </div>
             ))
           ) : (
-            // Render daily and yearly tasks normally
+            // Render daily and monthly tasks normally
             tasks.map((task) => (
               <div key={task.id} className="flex items-center space-x-2 p-2 border rounded">
                 <Checkbox
@@ -350,7 +353,8 @@ function MaintenanceContent() {
                       {task.priority}
                     </Badge>
                     <span>•</span>
-                    <span>{task.frequency}</span>
+                    {/* Yearly tasks are listed under the Monthly tab, so label them as monthly there */}
+                    <span>{activeTab === "monthly" ? "monthly" : task.frequency}</span>
                     {task.completedBy && (
                       <>
                         <span>•</span>
@@ -537,7 +541,7 @@ function MaintenanceContent() {
                           <SelectContent>
                             <SelectItem value="daily">Daily</SelectItem>
                             <SelectItem value="weekly">Weekly</SelectItem>
-                            <SelectItem value="yearly">Yearly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -620,9 +624,9 @@ function MaintenanceContent() {
             <Calendar className="h-4 w-4" />
             <span>Weekly</span>
           </TabsTrigger>
-          <TabsTrigger value="yearly" className="flex items-center space-x-2">
+          <TabsTrigger value="monthly" className="flex items-center space-x-2">
             <CalendarDays className="h-4 w-4" />
-            <span>Yearly</span>
+            <span>Monthly</span>
           </TabsTrigger>
         </TabsList>
 
@@ -641,8 +645,8 @@ function MaintenanceContent() {
               <TabsContent value="weekly" className="space-y-4">
                 {renderTaskList(weeklyTasks, weeklyStats)}
               </TabsContent>
-              <TabsContent value="yearly" className="space-y-4">
-                {renderTaskList(yearlyTasks, yearlyStats)}
+              <TabsContent value="monthly" className="space-y-4">
+                {renderTaskList(monthlyTasks, monthlyStats)}
               </TabsContent>
             </CardContent>
           </Card>
@@ -654,8 +658,8 @@ function MaintenanceContent() {
             <TabsContent value="weekly">
               {renderCompletionCard(weeklyStats, "Weekly Completion", <Calendar className="h-4 w-4" />)}
             </TabsContent>
-            <TabsContent value="yearly">
-              {renderCompletionCard(yearlyStats, "Yearly Completion", <CalendarDays className="h-4 w-4" />)}
+            <TabsContent value="monthly">
+              {renderCompletionCard(monthlyStats, "Monthly Completion", <CalendarDays className="h-4 w-4" />)}
             </TabsContent>
 
             <Card>
@@ -665,7 +669,7 @@ function MaintenanceContent() {
               <CardContent>
                 <div className="space-y-2">
                   {(() => {
-                    const currentTasks = activeTab === "daily" ? dailyTasks : activeTab === "weekly" ? weeklyTasks : yearlyTasks
+                    const currentTasks = activeTab === "daily" ? dailyTasks : activeTab === "weekly" ? weeklyTasks : monthlyTasks
                     const highPriorityTasks = currentTasks.filter((task) => task.priority === "high" && !task.completed)
                     
                     return highPriorityTasks.length > 0 ? (

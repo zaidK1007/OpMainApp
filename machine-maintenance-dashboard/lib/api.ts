@@ -276,11 +276,11 @@ class ApiService {
   async createOperationLog(token: string, data: {
     machineId: string;
     date: string;
-    startTime: string;
-    endTime: string;
+    startTime?: string;
+    endTime?: string;
     totalHours: number;
     engineer: string;
-    operator: string;
+    operator?: string;
     notOperatedReason?: string;
     maintenanceChecklistCompleted?: boolean;
     weeklyChecklistCompleted?: boolean;

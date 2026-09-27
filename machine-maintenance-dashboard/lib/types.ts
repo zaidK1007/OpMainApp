@@ -22,11 +22,11 @@ export interface OperationLog {
   machineId: string
   machineName: string
   date: string
-  startTime: string
-  endTime: string
+  startTime?: string
+  endTime?: string
   totalHours: number
   engineer: string
-  operator: string
+  operator?: string
   notOperatedReason?: string
   maintenanceChecklistCompleted: boolean
 }

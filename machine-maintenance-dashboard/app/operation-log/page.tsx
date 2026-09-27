@@ -23,10 +23,13 @@ function OperationLogContent() {
   const { token } = useAuth()
   const [selectedSite, setSelectedSite] = useState("all")
   const [selectedMachine, setSelectedMachine] = useState("")
-  const [startTime, setStartTime] = useState("")
-  const [endTime, setEndTime] = useState("")
+  const [logDate, setLogDate] = useState(() => {
+    const now = new Date()
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    return local.toISOString().split("T")[0]
+  })
+  const [totalTime, setTotalTime] = useState("")
   const [engineer, setEngineer] = useState("")
-  const [operator, setOperator] = useState("")
   const [notOperatedReason, setNotOperatedReason] = useState("")
   const [maintenanceCompleted, setMaintenanceCompleted] = useState(false)
   const [weeklyChecklistCompleted, setWeeklyChecklistCompleted] = useState(false)
@@ -80,20 +83,11 @@ function OperationLogContent() {
         return machine && machine.siteId === selectedSite
       })
 
-  const calculateTotalHours = () => {
-    if (startTime && endTime) {
-      const start = new Date(`2024-01-01T${startTime}:00`)
-      const end = new Date(`2024-01-01T${endTime}:00`)
-      const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
-      return Math.max(0, diff).toFixed(1)
-    }
-    return "0"
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!selectedMachine || !startTime || !endTime || !engineer || !operator) {
+    const totalHours = parseFloat(totalTime)
+
+    if (!selectedMachine || !logDate || !totalTime || Number.isNaN(totalHours) || totalHours < 0 || !engineer) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields.",
@@ -105,16 +99,11 @@ function OperationLogContent() {
     setIsSubmitting(true)
     
     try {
-      const totalHours = parseFloat(calculateTotalHours())
-      
       await apiService.createOperationLog(token!, {
         machineId: selectedMachine,
-        date: new Date().toISOString().split('T')[0], // Today's date
-        startTime,
-        endTime,
+        date: logDate,
         totalHours,
         engineer,
-        operator,
         notOperatedReason: notOperatedReason || undefined,
         maintenanceChecklistCompleted: maintenanceCompleted,
         weeklyChecklistCompleted: weeklyChecklistCompleted
@@ -125,10 +114,8 @@ function OperationLogContent() {
       setOperationLogs(updatedLogs)
 
       // Reset form
-      setStartTime("")
-      setEndTime("")
+      setTotalTime("")
       setEngineer("")
-      setOperator("")
       setNotOperatedReason("")
       setMaintenanceCompleted(false)
       setWeeklyChecklistCompleted(false)
@@ -206,44 +193,40 @@ function OperationLogContent() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="start-time">Start Time</Label>
-                  <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="end-time">End Time</Label>
-                  <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+              <div className="space-y-2">
+                <Label htmlFor="log-date">Date</Label>
+                <Input
+                  id="log-date"
+                  type="date"
+                  value={logDate}
+                  onChange={(e) => setLogDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="total-time">Total Time (hours)</Label>
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="total-time"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={totalTime}
+                    onChange={(e) => setTotalTime(e.target.value)}
+                    placeholder="Enter total hours"
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Total Hours (Auto-calculated)</Label>
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-lg font-semibold">{calculateTotalHours()} hours</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="engineer">Engineer Name</Label>
-                  <Input
-                    id="engineer"
-                    value={engineer}
-                    onChange={(e) => setEngineer(e.target.value)}
-                    placeholder="Enter engineer name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="operator">Operator Name</Label>
-                  <Input
-                    id="operator"
-                    value={operator}
-                    onChange={(e) => setOperator(e.target.value)}
-                    placeholder="Enter operator name"
-                  />
-                </div>
+                <Label htmlFor="engineer">Engineer Name</Label>
+                <Input
+                  id="engineer"
+                  value={engineer}
+                  onChange={(e) => setEngineer(e.target.value)}
+                  placeholder="Enter engineer name"
+                />
               </div>
 
               <div className="space-y-2">

@@ -145,7 +145,7 @@ class AuthService {
       });
 
       if (!user) {
-        await this.recordLoginAttempt(null, false, req);
+        // LoginHistory.userId is required, so attempts for unknown emails can't be recorded
         throw new Error('Invalid credentials');
       }
 
